@@ -1,0 +1,19 @@
+- name: SSSD Integration Playbook
+  hosts:  '{{ target_hosts | default("target_servers") }}'
+  vars_prompt:
+    - name: "bind_user"
+      prompt: "Username for joining AD"
+      private: no
+        
+    - name: "bind_password"
+      prompt: "Password for the AD user"
+      private: yes
+     
+    - name: "site"
+      prompt: "The location of target servers? ctu or pek"
+      private: no
+  roles:
+    - SSSD-Winbind
+    - PRCFOLK
+    - Samba 
+#    - Xrdp
