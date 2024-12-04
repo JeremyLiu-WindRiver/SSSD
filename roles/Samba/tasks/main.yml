@@ -1,0 +1,52 @@
+---
+# tasks file for roles/FileSharing
+- block:
+  - name: Install Samba/NFS/Apache2
+    ansible.builtin.apt:
+      pkg:
+      - samba
+      - winbind
+      - nfs-kernel-server
+      - apache2
+  - name: Rename smb.conf to smb.conf.bak
+    ansible.builtin.shell:
+      cmd: mv smb.conf smb.conf.bak
+      chdir: /etc/samba/
+  - name: Download new smb.conf
+    ansible.builtin.get_url:
+      url: http://128.224.97.52/Config/smb.conf.winbind
+      dest: /etc/samba/smb.conf
+      mode: '0755'
+
+        
+  - name: Join AD in Winbind
+    ansible.builtin.shell:
+      cmd: /bin/bash -c "echo {{ bind_password }} | net ads join -U {{ bind_user }} "
+      chdir: /etc/samba/
+
+  - name: Restart service winbind
+    ansible.builtin.service:
+      name: winbind
+      state: restarted
+      enabled: yes
+  - name: Restart service samba
+    ansible.builtin.service:
+      name: smbd
+      state: restarted
+      enabled: yes
+
+  - name: Insert example line for NFS Share
+    ansible.builtin.lineinfile:
+      path: /etc/exports
+      line: '#/path/to/share *(rw,sync,no_subtree_check)'
+      create: yes
+  - name: Restart/enable service nfs
+    ansible.builtin.service:
+      name: nfs-server
+      state: restarted
+      enabled: yes
+  - name: Restart/enable service apache2
+    ansible.builtin.service:
+      name: apache2
+      state: restarted
+      enabled: yes
