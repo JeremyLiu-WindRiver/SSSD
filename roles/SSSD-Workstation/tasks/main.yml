@@ -18,6 +18,7 @@
     - oddjob-mkhomedir
     - packagekit
     - cifs-utils
+    - autofs
   register: package_installation
 
 - name: Display status of package installation
