@@ -50,3 +50,7 @@
       name: apache2
       state: restarted
       enabled: yes
+   - name: Restart SSSD Service
+    ansible.builtin.service:
+      name: sssd
+      state: restarted
