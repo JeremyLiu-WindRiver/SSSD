@@ -1,5 +1,5 @@
 - name: SSSD Integration Playbook
-  hosts:  '{{ target_hosts | default("target_servers") }}'
+  hosts:  all
   vars_prompt:
     - name: "bind_user"
       prompt: "Username for joining AD"
