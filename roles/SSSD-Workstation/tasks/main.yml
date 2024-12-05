@@ -1,1 +1,136 @@
+---
+# tasks file for roles/SSSD-Workstation
+- name: Install required packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - sssd
+    - realmd
+    - adcli
+    - sssd-tools
+    - samba
+    - winbind
+    - libnss-sss
+    - libpam-sss
+    - samba-common-bin
+    - oddjob
+    - oddjob-mkhomedir
+    - packagekit
+    - cifs-utils
+  register: package_installation
 
+- name: Display status of package installation
+  debug:
+    msg: "{{ item.item }} is successfully installed"
+  loop: "{{ package_installation.results }}"
+  when: item.changed
+  loop_control:
+    label: "{{ item.item }}"
+
+- name: Stop service sssd, if started
+  ansible.builtin.service:
+    name: sssd
+    state: stopped
+  ignore_errors: yes
+
+- name: Leave realm CORP.AD.WRS.COM
+  command: /bin/bash -c "echo {{ bind_password }} | realm leave --user={{ bind_user }} CORP.AD.WRS.COM --remove"
+  register: leave_output
+  no_log: True
+  ignore_errors: yes
+
+- name: Leave realm CORP.AD.WRS.COM
+  command: /bin/bash -c "echo {{ bind_password }} | realm leave --user={{ bind_user }} CORP.AD.WRS.COM --remove"
+  register: leave_output
+  no_log: True
+  ignore_errors: yes
+
+- name: Display leave success message
+  debug:
+    msg: "Leave successful!"
+  when: leave_output.rc == 0
+
+- name: Display leave error message
+  debug:
+    msg: "Leave failed or not joined"
+  when: leave_output.rc != 0
+
+- name: Remove SSSD cache
+  ansible.builtin.shell:
+    cmd: rm -f /var/lib/sss/db/*
+    chdir: /
+
+- name: Remove krb5 cache
+  ansible.builtin.shell:
+    cmd: rm -f /etc/krb5*
+    chdir: /
+  ignore_errors: yes
+
+- name: Join system
+  command: /bin/bash -c "echo {{ bind_password }} | realm join --user={{ bind_user }} CORP.AD.WRS.COM "
+  register: join_output
+  no_log: True
+  ignore_errors: yes
+
+- name: Display success message
+  debug:
+    msg: "Join successful!"
+  when: join_output.rc == 0
+
+- name: Display error message
+  debug:
+    msg: "Join failed or already joined"
+  when: join_output.rc != 0
+
+- name: Update configuration files
+  block:
+  - name: Rename sssd.conf to sssd.conf.bak
+    ansible.builtin.shell:
+      cmd: mv sssd.conf sssd.conf.bak
+      chdir: /etc/sssd/
+  - name: Download new sssd.conf
+    ansible.builtin.get_url:
+      url: http://128.224.97.52/Config/sssd.conf.workstation
+      dest: /etc/sssd/sssd.conf
+      mode: '0600'
+  - name: Modify /etc/nsswitch.conf passwd
+    lineinfile:
+      path: /etc/nsswitch.conf
+      regexp: '^passwd'
+      line: 'passwd:         files sss systemd'
+      state: present
+  - name: Modify /etc/nsswitch.conf group
+    lineinfile:
+      path: /etc/nsswitch.conf
+      regexp: '^group'
+      line: 'group:          files sss systemd'
+      state: present
+  - name: Add CTU-Client Admins line to sudoers file
+    lineinfile:
+      path: /etc/sudoers
+      insertafter: '%admin ALL=(ALL) ALL'
+      line: '%\CTU-Client\ Admins ALL=(ALL) NOPASSWD:ALL'
+      validate: "visudo -cf %s"
+
+  - name: Add PEK-Client Admins line to sudoers file
+    lineinfile:
+      path: /etc/sudoers
+      insertafter: '%admin ALL=(ALL) ALL'
+      line: '%\PEK-Client\ Admins ALL=(ALL) NOPASSWD:ALL'
+      validate: "visudo -cf %s"
+- name: Restart the SSSD Service
+  block:
+    - name: Remove SSSD cache
+      ansible.builtin.shell:
+        cmd: rm -f /var/lib/sss/db/*
+        chdir: /
+
+    - name: Restart SSSD service
+      service:
+        name: sssd
+        state: restarted
+    - name: Restart Winbind service
+      service:
+        name: winbind
+        state: restarted
