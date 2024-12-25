@@ -51,11 +51,13 @@
   debug:
     msg: "Leave successful!"
   when: leave_output.rc == 0
+  ignore_errors: yes
 
 - name: Display leave error message
   debug:
     msg: "Leave failed or not joined"
   when: leave_output.rc != 0
+  ignore_errors: yes
 
 - name: Remove SSSD cache
   ansible.builtin.shell:
