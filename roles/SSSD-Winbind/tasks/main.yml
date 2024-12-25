@@ -49,14 +49,7 @@
 
 - name: Display leave success message
   debug:
-    msg: "Leave successful!"
-  when: leave_output.rc == 0
-  ignore_errors: yes
-
-- name: Display leave error message
-  debug:
-    msg: "Leave failed or not joined"
-  when: leave_output.rc != 0
+    msg: Leave output is: {{ leave_output }}
   ignore_errors: yes
 
 - name: Remove SSSD cache
@@ -78,13 +71,8 @@
 
 - name: Display success message
   debug:
-    msg: "Join successful!"
-  when: join_output.rc == 0
+    msg: Join output is: {{ join_output }}
 
-- name: Display error message
-  debug:
-    msg: "Join failed or already joined"
-  when: join_output.rc != 0
 
 - name: Update configuration files
   block:
