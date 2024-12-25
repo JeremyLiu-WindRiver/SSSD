@@ -47,7 +47,7 @@
   no_log: True
   ignore_errors: yes
 
-- name: Display leave success message
+- name: Display leave result.
   debug:
     msg: Leave output is: {{ leave_output }}
   ignore_errors: yes
@@ -69,7 +69,7 @@
   no_log: True
   ignore_errors: yes
 
-- name: Display success message
+- name: Display join result.
   debug:
     msg: Join output is: {{ join_output }}
 
