@@ -49,7 +49,7 @@
 
 - name: Display leave result.
   debug:
-    msg: Leave output is: {{ leave_output }}
+    msg: Leave output is: "{{ leave_output }}"
   ignore_errors: yes
 
 - name: Remove SSSD cache
@@ -71,7 +71,7 @@
 
 - name: Display join result.
   debug:
-    msg: Join output is: {{ join_output }}
+    msg: Join output is: "{{ join_output }}"
 
 
 - name: Update configuration files
